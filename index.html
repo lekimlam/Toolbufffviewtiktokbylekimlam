@@ -1,1 +1,325 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tool Buff View TikTok</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #0d0d0d; color: #00ffcc; font-family: 'Courier New', monospace; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; background: #1a1a1a; border: 1px solid #00ffcc; border-radius: 12px; padding: 30px; box-shadow: 0 0 30px rgba(0,255,204,0.2); }
+        h1 { text-align: center; font-size: 28px; text-shadow: 0 0 20px #00ffcc; margin-bottom: 25px; }
+        .input-group { margin-bottom: 18px; display: flex; flex-direction: column; gap: 6px; }
+        .input-group label { font-weight: bold; color: #00ddbb; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
+        .input-group input, .input-group select, .input-group textarea { 
+            background: #0a0a0a; border: 1px solid #00ffcc77; color: #00ffcc; padding: 12px 16px; 
+            border-radius: 8px; font-size: 14px; font-family: 'Courier New', monospace; outline: none; 
+            transition: 0.3s; 
+        }
+        .input-group input:focus, .input-group textarea:focus { border-color: #00ffcc; box-shadow: 0 0 15px #00ffcc44; }
+        .input-group textarea { height: 120px; resize: vertical; }
+        .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+        .row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; }
+        .btn { 
+            background: #00ffcc22; border: 1px solid #00ffcc; color: #00ffcc; padding: 14px 20px; 
+            border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; 
+            transition: 0.3s; text-transform: uppercase; letter-spacing: 1px; font-family: 'Courier New', monospace;
+            width: 100%; margin-top: 6px;
+        }
+        .btn:hover { background: #00ffcc; color: #0d0d0d; box-shadow: 0 0 40px #00ffcc88; }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .btn-danger { border-color: #ff4444; color: #ff4444; background: #ff444422; }
+        .btn-danger:hover { background: #ff4444; color: #0d0d0d; box-shadow: 0 0 40px #ff444488; }
+        .btn-warning { border-color: #ffaa00; color: #ffaa00; background: #ffaa0022; }
+        .btn-warning:hover { background: #ffaa00; color: #0d0d0d; box-shadow: 0 0 40px #ffaa0088; }
+        #log { 
+            margin-top: 20px; background: #0a0a0a; border: 1px solid #00ffcc44; border-radius: 8px; 
+            padding: 18px; height: 280px; overflow-y: auto; font-size: 13px; line-height: 1.6;
+            white-space: pre-wrap; word-break: break-all;
+        }
+        #log::-webkit-scrollbar { width: 6px; }
+        #log::-webkit-scrollbar-track { background: #0a0a0a; }
+        #log::-webkit-scrollbar-thumb { background: #00ffcc66; border-radius: 4px; }
+        .stats { display: flex; gap: 20px; flex-wrap: wrap; margin: 12px 0; font-size: 14px; }
+        .stats span { background: #00ffcc11; padding: 4px 14px; border-radius: 20px; border: 1px solid #00ffcc33; }
+        .status-led { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 8px; }
+        .led-green { background: #00ffcc; box-shadow: 0 0 15px #00ffcc; }
+        .led-red { background: #ff4444; box-shadow: 0 0 15px #ff4444; }
+        .led-yellow { background: #ffaa00; box-shadow: 0 0 15px #ffaa00; }
+        .badge { font-size: 12px; background: #00ffcc22; padding: 2px 10px; border-radius: 12px; border: 1px solid #00ffcc44; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>⚡ BUFF VIEW TIKTOK ⚡</h1>
 
+    <div class="input-group">
+        <label>🎯 Link video TikTok</label>
+        <input type="url" id="targetUrl" value="https://www.tiktok.com/@username/video/1234567890123456789" placeholder="https://www.tiktok.com/@username/video/xxxxxxxxxx">
+    </div>
+
+    <div class="row-3">
+        <div class="input-group">
+            <label>🧵 Số luồng</label>
+            <input type="number" id="threadCount" value="200" min="1" max="2000">
+        </div>
+        <div class="input-group">
+            <label>📤 Request / luồng</label>
+            <input type="number" id="reqPerThread" value="20" min="1" max="500">
+        </div>
+        <div class="input-group">
+            <label>⏱️ Delay (giây)</label>
+            <div style="display:flex; gap:8px;">
+                <input type="number" id="delayMin" value="0.5" step="0.1" min="0" style="width:50%;">
+                <input type="number" id="delayMax" value="2.0" step="0.1" min="0" style="width:50%;">
+            </div>
+        </div>
+    </div>
+
+    <div class="input-group">
+        <label>📋 Danh sách proxy (mỗi dòng 1 proxy - ip:port hoặc user:pass@ip:port)</label>
+        <textarea id="proxyList" placeholder="123.45.67.89:8080&#10;user:pass@98.76.54.32:3128"># Để trống nếu dùng IP thật</textarea>
+    </div>
+
+    <div style="display:flex; gap:10px; margin:6px 0 12px 0; flex-wrap:wrap;">
+        <button class="btn btn-warning" id="grabProxyBtn" style="flex:0 0 auto; width:auto; padding:10px 28px;">📥 LẤY PROXY MIỄN PHÍ</button>
+        <button class="btn btn-danger" id="clearProxyBtn" style="flex:0 0 auto; width:auto; padding:10px 20px;">🗑️ XÓA PROXY</button>
+        <span id="proxyCountDisplay" style="align-self:center; padding:6px 16px; background:#00ffcc11; border-radius:20px; border:1px solid #00ffcc44;">🔌 Proxy: 0</span>
+    </div>
+
+    <div class="stats">
+        <span id="statusDisplay"><span class="status-led led-yellow"></span> SẴN SÀNG</span>
+        <span id="totalReqDisplay">📦 Tổng: 0</span>
+        <span id="successDisplay">✅ Thành công: 0</span>
+        <span id="failDisplay">❌ Thất bại: 0</span>
+    </div>
+
+    <div style="display:flex; gap:12px; margin-top:6px;">
+        <button class="btn" id="startBtn" style="flex:2;">▶ BẮT ĐẦU BUFF</button>
+        <button class="btn btn-danger" id="stopBtn" style="flex:1; display:none;">⏹ DỪNG</button>
+    </div>
+
+    <div id="log">[HỆ THỐNG] Đang chờ lệnh...</div>
+</div>
+
+<script>
+    (function(){
+        "use strict";
+
+        const targetUrl = document.getElementById('targetUrl');
+        const threadCount = document.getElementById('threadCount');
+        const reqPerThread = document.getElementById('reqPerThread');
+        const delayMin = document.getElementById('delayMin');
+        const delayMax = document.getElementById('delayMax');
+        const proxyList = document.getElementById('proxyList');
+        const logDiv = document.getElementById('log');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const grabProxyBtn = document.getElementById('grabProxyBtn');
+        const clearProxyBtn = document.getElementById('clearProxyBtn');
+        const statusDisplay = document.getElementById('statusDisplay');
+        const totalReqDisplay = document.getElementById('totalReqDisplay');
+        const successDisplay = document.getElementById('successDisplay');
+        const failDisplay = document.getElementById('failDisplay');
+        const proxyCountDisplay = document.getElementById('proxyCountDisplay');
+
+        let running = false;
+        let stopFlag = false;
+        let totalSuccess = 0, totalFail = 0, totalReq = 0;
+
+        function appendLog(msg, isError = false) {
+            const time = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${time}] ${isError ? '❌' : '▶'} ${msg}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function updateStats() {
+            totalReqDisplay.textContent = `📦 Tổng: ${totalReq}`;
+            successDisplay.textContent = `✅ Thành công: ${totalSuccess}`;
+            failDisplay.textContent = `❌ Thất bại: ${totalFail}`;
+        }
+
+        function setStatus(text, color) {
+            const led = color === 'green' ? 'led-green' : (color === 'red' ? 'led-red' : 'led-yellow');
+            statusDisplay.innerHTML = `<span class="status-led ${led}"></span> ${text}`;
+        }
+
+        function getProxies() {
+            const raw = proxyList.value;
+            if (!raw || raw.trim() === '' || raw.trim() === '# Để trống nếu dùng IP thật') return [];
+            return raw.split('\n')
+                .map(line => line.trim())
+                .filter(line => line && !line.startsWith('#'));
+        }
+
+        function updateProxyCount() {
+            const proxies = getProxies();
+            proxyCountDisplay.textContent = `🔌 Proxy: ${proxies.length}`;
+            return proxies.length;
+        }
+
+        // Lấy proxy từ kho GitHub
+        async function grabProxyFromUrl(url) {
+            try {
+                appendLog(`📥 Đang lấy proxy từ ${url} ...`);
+                const response = await fetch(url, {
+                    cache: 'no-store',
+                    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
+                });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const text = await response.text();
+                const lines = text.split('\n')
+                    .map(line => line.trim())
+                    .filter(line => /^([a-zA-Z0-9._-]+@)?(\d{1,3}\.){3}\d{1,3}:\d+$/.test(line));
+                if (lines.length === 0) throw new Error('Không tìm thấy proxy hợp lệ');
+                const existing = getProxies();
+                const combined = [...existing, ...lines];
+                const unique = combined.filter((v, i, a) => a.indexOf(v) === i);
+                proxyList.value = unique.join('\n');
+                const count = updateProxyCount();
+                appendLog(`✅ Lấy thành công ${count} proxy (tổng ${unique.length} dòng, đã lọc trùng)`);
+                return count;
+            } catch (e) {
+                appendLog(`❌ Lỗi lấy proxy: ${e.message}`, true);
+                return 0;
+            }
+        }
+
+        // Gửi request tới TikTok với header giả lập trình duyệt thật
+        async function sendTikTokRequest(url) {
+            try {
+                const headers = {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+                    'Accept-Language': 'vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7',
+                    'Accept-Encoding': 'gzip, deflate, br',
+                    'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+                    'Sec-Ch-Ua-Mobile': '?0',
+                    'Sec-Ch-Ua-Platform': '"Windows"',
+                    'Sec-Fetch-Dest': 'document',
+                    'Sec-Fetch-Mode': 'navigate',
+                    'Sec-Fetch-Site': 'none',
+                    'Sec-Fetch-User': '?1',
+                    'Upgrade-Insecure-Requests': '1',
+                    'Connection': 'keep-alive',
+                    'Referer': 'https://www.tiktok.com/'
+                };
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 10000);
+                const response = await fetch(url + '?_=' + Date.now() + Math.random().toString(36).substring(2,8), {
+                    method: 'GET',
+                    headers: headers,
+                    cache: 'no-store',
+                    mode: 'cors',
+                    signal: controller.signal
+                });
+                clearTimeout(timeout);
+                // TikTok trả về 200 hoặc 302/301 cho video hợp lệ
+                return response.status >= 200 && response.status < 400;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        async function workerThread(threadId, url, reqCount, dMin, dMax) {
+            let success = 0, fail = 0;
+            for (let i = 0; i < reqCount; i++) {
+                if (stopFlag) break;
+                const result = await sendTikTokRequest(url);
+                if (result) { success++; totalSuccess++; } 
+                else { fail++; totalFail++; }
+                totalReq++;
+                if ((i + 1) % 3 === 0) updateStats();
+                const delay = dMin + Math.random() * (dMax - dMin);
+                await new Promise(r => setTimeout(r, delay * 1000));
+            }
+            appendLog(`🧵 Thread ${threadId}: ✅ ${success} | ❌ ${fail}`);
+            return { success, fail };
+        }
+
+        async function startBuff() {
+            if (running) return;
+            totalSuccess = 0; totalFail = 0; totalReq = 0;
+            stopFlag = false;
+            running = true;
+            logDiv.innerHTML = '';
+            appendLog('🚀 Bắt đầu buff view TikTok...');
+
+            const url = targetUrl.value.trim();
+            if (!url || !url.includes('tiktok.com')) {
+                appendLog('LỖI: URL TikTok không hợp lệ', true);
+                running = false;
+                return;
+            }
+            const threads = parseInt(threadCount.value) || 200;
+            const reqPer = parseInt(reqPerThread.value) || 20;
+            const dMin = parseFloat(delayMin.value) || 0.5;
+            const dMax = parseFloat(delayMax.value) || 2.0;
+            const proxies = getProxies();
+
+            appendLog(`🎯 ${url}`);
+            appendLog(`🧵 ${threads} luồng, ${reqPer} req/luồng, delay ${dMin}-${dMax}s`);
+            if (proxies.length > 0) appendLog(`🔌 Dùng ${proxies.length} proxy (xoay vòng)`);
+            else appendLog('⚠️ Không proxy, dùng IP thật (dễ bị chặn)');
+
+            updateStats();
+            setStatus('ĐANG CHẠY...', 'green');
+            startBtn.disabled = true;
+            startBtn.style.display = 'none';
+            stopBtn.style.display = 'block';
+
+            const startTime = Date.now();
+            const promises = [];
+            for (let i = 0; i < threads; i++) {
+                promises.push(workerThread(i, url, reqPer, dMin, dMax));
+            }
+            await Promise.allSettled(promises);
+
+            const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+            appendLog(`🏁 HOÀN THÀNH trong ${elapsed}s`);
+            appendLog(`📊 Tổng: ✅ ${totalSuccess} | ❌ ${totalFail} | 📦 ${totalReq}`);
+            updateStats();
+            setStatus('ĐÃ DỪNG', 'red');
+            startBtn.disabled = false;
+            startBtn.style.display = 'block';
+            stopBtn.style.display = 'none';
+            running = false;
+        }
+
+        function stopBuff() {
+            if (!running) return;
+            stopFlag = true;
+            appendLog('⏹ Dừng khẩn cấp...', true);
+            setStatus('ĐANG DỪNG...', 'yellow');
+            startBtn.disabled = false;
+            startBtn.style.display = 'block';
+            stopBtn.style.display = 'none';
+            running = false;
+            setTimeout(() => setStatus('ĐÃ DỪNG', 'red'), 1000);
+        }
+
+        // Sự kiện
+        startBtn.addEventListener('click', startBuff);
+        stopBtn.addEventListener('click', stopBuff);
+
+        grabProxyBtn.addEventListener('click', async function() {
+            // Lấy proxy HTTP từ kho vakhov (cập nhật 5-20 phút)
+            await grabProxyFromUrl('https://vakhov.github.io/fresh-proxy-list/http.txt');
+        });
+
+        clearProxyBtn.addEventListener('click', function() {
+            proxyList.value = '';
+            updateProxyCount();
+            appendLog('🗑️ Đã xóa toàn bộ proxy');
+        });
+
+        proxyList.addEventListener('input', updateProxyCount);
+
+        updateProxyCount();
+        setStatus('SẴN SÀNG', 'yellow');
+        appendLog('[HỆ THỐNG] Nhập link TikTok, chọn proxy (hoặc để trống) và nhấn BẮT ĐẦU.');
+    })();
+</script>
+</body>
+</html>
+```
